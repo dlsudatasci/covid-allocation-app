@@ -5,10 +5,9 @@ Created on Sun Nov  8 15:04:30 2020
 @author: tapiaj
 """
 
-import sys
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow
 from MainWindow import *
-import vacmodel as vm
+import Model as model
 
 import xlwt 
 from xlwt import Workbook 
@@ -64,8 +63,6 @@ class VAC_App(QMainWindow):
                     errors.append(err)
                     print(e + ": "+err)
                 
-        print(CR_data)
-
         # retrieve population data
         Pop_data = []
         for i in range(self.ui.Pop_PerGroup.rowCount()):
@@ -81,16 +78,11 @@ class VAC_App(QMainWindow):
                 errors.append(err)
                 print(e + ": "+err)
             
-        print(Pop_data)
-
         # retrieve vaccine efficiency value
         ve = self.ui.efficacy_value.value()
 
         # retrieve list of groups
         groups = self.Group
-
-        print(ve)
-        print(groups)
 
         # saving to excel
         if len(errors) == 0:
@@ -114,7 +106,7 @@ class VAC_App(QMainWindow):
             wb.save('sample.xls') 
 
         #store Groups
-        vm.Group=self.Group
+        # vm.Group=self.Group
     
         # #store Contact Rate Data
         # CR_data = []
@@ -128,7 +120,6 @@ class VAC_App(QMainWindow):
         # for i in range(self.ui.Pop_PerGroup.rowCount()):
         #     Pop_data.append(int(self.ui.Pop_PerGroup.item(i,0).text()))
         # vm.N0=dict(zip(vm.Group, Pop_data))
-        # vm.fn0 ={k:0.5 for k in vm.Group}
         
         # #store Vaccine Efficacy
         # vm.H = self.ui.efficacy_value.value()
@@ -139,9 +130,17 @@ class VAC_App(QMainWindow):
         # #store value in Widgets
         # qtresult = MyTableModel([solution[0]])
         # self.ui.tableView.setModel(qtresult)
-        
-if __name__=="__main__":
-    app = QApplication(sys.argv)
-    w = VAC_App()
-    w.show()
-    sys.exit(app.exec_())
+
+        #Print out data grabbed from View
+        fn0 ={k:0.5 for k in groups}
+        N0=dict(zip(groups, Pop_data))
+        Kmatval = CR_data
+        H = ve
+        print('Groups:',groups)
+        print('Pop. Data:',Pop_data)
+        print('fn0:',fn0)
+        print('Contact Rates:',CR_data)
+        print('Vaccine Efficiency:',ve)
+
+        solution = model.vac(groups,N0,fn0,Kmatval,H)
+        print(solution)

@@ -8,6 +8,8 @@ pyqt5 = "*"
 matplotlib = "*"
 pyomo = "*"
 cython = "*"
+xlwt = "*"
+flask = "*"
 
 [dev-packages]
 
