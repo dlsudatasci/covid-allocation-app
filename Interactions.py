@@ -5,14 +5,16 @@ Created on Sun Nov  8 15:04:30 2020
 @author: tapiaj
 """
 
-
 import sys
 from PyQt5.QtWidgets import QMainWindow, QApplication
 from MainWindow import *
 import vacmodel as vm
 
+import xlwt 
+from xlwt import Workbook 
+
 class VAC_App(QMainWindow):
-   
+
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
@@ -22,6 +24,10 @@ class VAC_App(QMainWindow):
         self.Group =[]
         
     def add(self):
+        groupname = self.ui.GroupName.text()
+        if (groupname == ''):
+            print("Groupname cannot be empty")
+            return
         self.Group.append(self.ui.GroupName.text())
         self.ui.Group_List.addItem(self.ui.GroupName.text())
         CRrc = self.ui.ContactRate.rowCount()
@@ -36,35 +42,103 @@ class VAC_App(QMainWindow):
         self.ui.Pop_PerGroup.setVerticalHeaderLabels(self.Group)
         self.ui.GroupName.setText('')
         self.ui.GroupName.setFocus()
-        
 
     def solve(self):
-        #store Groups
-        vm.Group=self.Group
-    
-        #store Contact Rate Data
+        errors = []
+
+        # retrieve data from the UI
+        # retrieve contact rate data
         CR_data = []
         for i in range(self.ui.ContactRate.rowCount()):
             for j in range(self.ui.ContactRate.columnCount()):
-                CR_data.append(float(self.ui.ContactRate.item(i,j).text()))
-        vm.Kmatval = CR_data
-        
-        #store Population Data
+                try:
+                    cell = self.ui.ContactRate.item(i,j).text()
+                    CR_data.append(float(cell))
+                except Exception as e:
+                    e = str(e)
+                    err = ''
+                    if ('NoneType' in e):
+                        err = "Value cannot be empty"
+                    if ('convert' in e):
+                        err = "Value cannot be string"
+                    errors.append(err)
+                    print(e + ": "+err)
+                
+        print(CR_data)
+
+        # retrieve population data
         Pop_data = []
         for i in range(self.ui.Pop_PerGroup.rowCount()):
-            Pop_data.append(int(self.ui.Pop_PerGroup.item(i,0).text()))
-        vm.N0=dict(zip(vm.Group, Pop_data))
-        vm.fn0 ={k:0.5 for k in vm.Group}
+            try:
+                Pop_data.append(int(self.ui.Pop_PerGroup.item(i,0).text()))
+            except Exception as e:
+                e = str(e)
+                err = ''
+                if ('NoneType' in e):
+                    err = "Value cannot be empty"
+                if ('convert' in e):
+                    err = "Value cannot be string"
+                errors.append(err)
+                print(e + ": "+err)
+            
+        print(Pop_data)
+
+        # retrieve vaccine efficiency value
+        ve = self.ui.efficacy_value.value()
+
+        # retrieve list of groups
+        groups = self.Group
+
+        print(ve)
+        print(groups)
+
+        # saving to excel
+        if len(errors) == 0:
+            wb = Workbook() 
+
+            # add_sheet is used to create sheet. 
+            sheet1 = wb.add_sheet('Groups') 
+
+            for i in range(0,len(groups)):
+                cur_group = groups[i]
+                cur_pop = Pop_data[i]
+                sheet1.write(i, 0, cur_group) 
+                sheet1.write(i, 1, cur_pop) 
+            sheet1.write(len(groups), 0, "Vaccine Efficacy") 
+            sheet1.write(len(groups), 1, ve) 
+
+            sheet2 = wb.add_sheet('Contact Rates') 
+            for i in range(0,len(CR_data)):
+                cur_cr = CR_data[i]
+                sheet2.write(i,0,cur_cr)
+            wb.save('sample.xls') 
+
+        #store Groups
+        vm.Group=self.Group
+    
+        # #store Contact Rate Data
+        # CR_data = []
+        # for i in range(self.ui.ContactRate.rowCount()):
+        #     for j in range(self.ui.ContactRate.columnCount()):
+        #         CR_data.append(float(self.ui.ContactRate.item(i,j).text()))
+        # vm.Kmatval = CR_data
         
-        #store Vaccine Efficacy
-        vm.H = self.ui.efficacy_value.value()
+        # #store Population Data
+        # Pop_data = []
+        # for i in range(self.ui.Pop_PerGroup.rowCount()):
+        #     Pop_data.append(int(self.ui.Pop_PerGroup.item(i,0).text()))
+        # vm.N0=dict(zip(vm.Group, Pop_data))
+        # vm.fn0 ={k:0.5 for k in vm.Group}
+        
+        # #store Vaccine Efficacy
+        # vm.H = self.ui.efficacy_value.value()
                 
-        #run model
-        solution = vm.model_setup()
+        # #run model
+        # solution = vm.model_setup()
         
-        #store value in Widgets
-        qtresult = MyTableModel([solution[0]])
-        self.ui.tableView.setModel(qtresult)
+        # #store value in Widgets
+        # qtresult = MyTableModel([solution[0]])
+        # self.ui.tableView.setModel(qtresult)
         
 if __name__=="__main__":
     app = QApplication(sys.argv)
