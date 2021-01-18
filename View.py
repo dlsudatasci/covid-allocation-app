@@ -142,5 +142,5 @@ class VAC_App(QMainWindow):
         print('Contact Rates:',CR_data)
         print('Vaccine Efficiency:',ve)
 
-        solution = model.vac(groups,N0,fn0,Kmatval,H)
+        solution = model.run('vac',groups,N0,fn0,Kmatval,H)
         print(solution)
