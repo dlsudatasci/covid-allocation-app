@@ -5,9 +5,10 @@ Created on Sun Nov  8 15:04:30 2020
 @author: tapiaj
 """
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem
 from MainWindow import *
 import Model as model
+import json
 
 import xlwt 
 from xlwt import Workbook 
@@ -20,15 +21,105 @@ class VAC_App(QMainWindow):
         self.ui.setupUi(self)
         self.ui.Add_Group.clicked.connect(self.add)
         self.ui.Solve_Model.clicked.connect(self.solve)
+        self.ui.actionSave_Data.triggered.connect(self.saveFile)
+        self.ui.actionSave_As.triggered.connect(self.saveFileAs)
+        self.ui.actionLoad_Data.triggered.connect(self.loadFile)
         self.Group =[]
+
+        self.file = None
+
+    def reset(self):
+        self.Group =[]
+        self.ui.Pop_PerGroup.setRowCount(0)
+        self.ui.Pop_PerGroup.setColumnCount(1)
+        self.ui.ContactRate.setRowCount(0)
+        self.ui.ContactRate.setColumnCount(0)
+        self.ui.efficacy_value.setValue(0)
+        while self.ui.Group_List.count() != 0:
+            self.ui.Group_List.takeItem(0)
+
+    def loadFile(self):
+        self.file = self.ui.open()
+        self.reset()
+
+        with open(self.file) as json_file:
+            data = json.load(json_file)
+            print(data)
+
+            pop_groups = data['population_groups']
+            for grp in pop_groups:
+                self.add(grp['name'])
+
+            self.ui.efficacy_value.setValue(data['vaccine_efficacy'])
+
+            for i in range(self.ui.Pop_PerGroup.rowCount()):
+                val = pop_groups[i]['size']
+                self.ui.Pop_PerGroup.setItem(i,0,QTableWidgetItem(str(val)))
+
+            groups = [grp['name'] for grp in pop_groups]
+            for cr in data['contact_rates']:
+                col = groups.index(cr['col'])
+                row = groups.index(cr['row'])
+                val = cr['val']
+                self.ui.ContactRate.setItem(row,col,QTableWidgetItem(str(val)))
         
-    def add(self):
-        groupname = self.ui.GroupName.text()
+    def saveFileAs(self):
+        self.file = None
+        self.saveFile()
+
+    def saveFile(self):
+        if self.file is None:
+            self.file = self.ui.saveAs()
+
+        data = self.retrieveData()
+        print(data)
+        errors = data['errors']
+        ve = data['ve']
+        groups = data['groups']
+        Pop_data = data['Pop_data']
+        CR_data = data['CR_data']
+
+        if len(errors) != 0:
+            return
+
+        toSave = {}
+        toSave["vaccine_efficacy"] = ve
+        toSave["population_groups"] = []
+        toSave["contact_rates"] = []
+
+        for i, group in enumerate(groups):
+            toSave["population_groups"].append({
+                "name":group,
+                "size":Pop_data[i]
+                })
+
+        cur = 0
+        for i, row in enumerate(groups):
+            for j, col in enumerate(groups):
+                print(row)
+                print(col)
+                print("----")
+                toSave["contact_rates"].append({
+                    "col":col,
+                    "row":row,
+                    "val":CR_data[cur]
+                })
+                cur += 1
+
+
+        ext = '.json' if '.json' not in self.file else ''
+        with open(self.file+ext, 'w') as outfile:
+            json.dump(toSave, outfile)
+
+        
+    def add(self, name=None):
+        groupname = name if name else self.ui.GroupName.text()
+        print(groupname)
         if (groupname == ''):
             print("Groupname cannot be empty")
             return
-        self.Group.append(self.ui.GroupName.text())
-        self.ui.Group_List.addItem(self.ui.GroupName.text())
+        self.Group.append(groupname)
+        self.ui.Group_List.addItem(groupname)
         CRrc = self.ui.ContactRate.rowCount()
         CRrc_2 = self.ui.ContactRate.columnCount()
         CRrc_3 = self.ui.Pop_PerGroup.rowCount()
@@ -42,7 +133,7 @@ class VAC_App(QMainWindow):
         self.ui.GroupName.setText('')
         self.ui.GroupName.setFocus()
 
-    def solve(self):
+    def retrieveData(self):
         errors = []
 
         # retrieve data from the UI
@@ -83,6 +174,17 @@ class VAC_App(QMainWindow):
 
         # retrieve list of groups
         groups = self.Group
+
+        return {'errors':errors,'ve':ve,'groups':groups,'Pop_data':Pop_data,'CR_data':CR_data}
+
+
+    def solve(self):
+        data = self.retrieveData()
+        errors = data['errors']
+        ve = data['ve']
+        groups = data['groups']
+        Pop_data = data['Pop_data']
+        CR_data = data['CR_data']
 
         # saving to excel
         if len(errors) == 0:

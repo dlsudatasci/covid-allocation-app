@@ -1,4 +1,3 @@
-// import { Container, Col, Row, InputGroup, FormControl, Button} from 'react-bootstrap';
 import Button from '@material-ui/core/Button';
 import { makeStyles } from '@material-ui/core/styles';
 import TextField from '@material-ui/core/TextField';
@@ -10,8 +9,8 @@ import Container from '@material-ui/core/Container';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Icon from '@material-ui/core/Icon';
 import ReactDataSheet from 'react-datasheet';
-// Be sure to include styles at some point, probably during your bootstrapping
 
+import axios from "axios"
 import React from 'react';
 
 const styles = makeStyles((theme) => ({
@@ -26,19 +25,9 @@ const styles = makeStyles((theme) => ({
   group: {
     marginTop: 10
   },
-
   buttonMargin: {
     marginTop: 10,
   },
-
-  closeBtn:{
-    "&:hover": {
-      cursor:'pointer'
-    },
-    
-  }
-
-
 }));
 
 class MainForm extends React.Component {
@@ -46,7 +35,6 @@ class MainForm extends React.Component {
     super(props);
     this.state = {
       groups: [],
-      contactRates: [[]],
       groupName: "",
       grid: [
         // [{value: 0}]
@@ -57,6 +45,7 @@ class MainForm extends React.Component {
     this.addGroup = this.addGroup.bind(this);
   }
 
+  // handling change for text box values (Group, vaccine efficacy)
   handleChange(event) {
     let fieldName = event.target.name;
     let fieldVal = event.target.value;
@@ -65,15 +54,27 @@ class MainForm extends React.Component {
     })
   }
 
-  // handleChange = (event) => {
-  //   setName(event.target.value);
-  // };
-
+  // handling change for population size values
   handlePopulationChange(event) {
-    // let groupName = event.target.name;
-    // let fieldVal = event.target.value;
+    let groupName = event.target.name;
+    let fieldVal = event.target.value;
+    let grpsClone = JSON.parse(JSON.stringify(this.state)).groups
+    let index = -1
+    grpsClone.find(function (item, i) {
+      if (item.name === groupName) {
+        index = i
+        return i
+      }
+    });
+
+    grpsClone[index].population = fieldVal
+
+    this.setState({
+      groups: grpsClone
+    })
   }
 
+  // helper function for contact grid
   addToPrev(prevGrid, newVal) {
     prevGrid.forEach(row => {
       while (row.length !== newVal) {
@@ -83,6 +84,7 @@ class MainForm extends React.Component {
     return prevGrid
   }
 
+  // adding new population group, updating state for groups array and contact grid
   addGroup() {
     let name = this.state.groupName
     if (name === "") return
@@ -99,8 +101,58 @@ class MainForm extends React.Component {
     }))
   }
 
-  removeGroup() {
+  // for removing population groups
+  removeGroup(event) {
 
+  }
+
+  // for allocate button
+  allocate() {
+    console.log(this.state)
+
+    // build API URL
+    let apiURL = "https://34.123.195.162:5000/solve?groups=["
+
+    this.state.groups.forEach((group, index) => {
+      apiURL += "'" + group.name + "'"
+      if (index !== this.state.groups.length - 1) {
+        apiURL += ","
+      }
+    });
+
+    apiURL += "]&N0=[";
+
+    this.state.groups.forEach((group,index) => {
+      apiURL += group.population
+      if (index !== this.state.groups.length - 1) {
+        apiURL += ","
+      }
+    });
+
+    apiURL += "]&fn0=[0.5,0.5]&Kmatval=[";
+    this.state.grid.forEach((row,ri) => {
+      console.log(row)
+      row.forEach((cell,ci)=>{
+        apiURL += cell.value
+        if (ri!==this.state.grid.length-1 || ci!==row.length-1){
+          apiURL += ","
+        }
+      })
+    });
+
+    apiURL += "]&H="+this.state.ve;
+    let sample = "https://34.123.195.162:5000/solve?groups=[%22A%22%2C%22B%22]&N0=[200%2C200]&fn0=[0.5%2C0.5]&Kmatval=[1.0%2C0.9%2C0.8%2C0.9]&H=0.98"
+
+    // fetch result from API and print
+    console.log(apiURL)
+    axios
+      .get(apiURL)
+      .then((response) => {
+        console.log(response)
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   }
 
   render() {
@@ -109,7 +161,9 @@ class MainForm extends React.Component {
       <div className='wrapper'>
         <Container>
           <Grid container spacing={1}>
+            {/* Left Column */}
             <Grid item xs={4}>
+              {/* Population Group text input */}
               <h2>Population Groups</h2>
               {/* <form noValidate autoComplete="off"> */}
               <TextField
@@ -121,49 +175,50 @@ class MainForm extends React.Component {
                 variant="outlined"
                 InputProps={{ endAdornment: <Button onClick={this.addGroup}>Add</Button> }}
               />
-
               {/* </form> */}
 
+              {/* Population size input for every group */}
               {this.state.groups.map((group) =>
-
-                <Box mt={2}>
+                <Box mt={2} key={group.name}>
                   <TextField
                     fullWidth
                     // label={group.name}
-                    // value={group.population}
+                    value={group.population}
+                    onChange={this.handlePopulationChange.bind(this)}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">{group.name}:</InputAdornment>,
                       endAdornment: <Icon onClick={this.removeGroup} className={classes.closeBtn}>close</Icon>
                     }}
+                    name={group.name}
                   />
-
                 </Box>
-
               )}
 
+              {/* Vaccine efficacy input */}
               <Box mt={2}>
                 <TextField fullWidth required id="standard-required" label="Vaccine Efficiency" value={this.state.ve}
-                onChange={this.handleChange.bind(this)} name='ve'
-                 />
+                  onChange={this.handleChange.bind(this)} name='ve'
+                />
               </Box>
-
-
-
             </Grid>
 
+            {/* Right Column */}
             <Grid item xs={8}>
               <Grid container spacing={1}>
                 <Grid item xs={6}>
                   <h2>Contact Rates</h2>
                 </Grid>
+                {/* Allocate button */}
                 <Grid item xs={6}>
-                <Box mt={2}>
-                  <Button className={classes.buttonMargin} variant="contained" color="primary">
-                    Allocate
+                  <Box mt={2}>
+                    <Button onClick={this.allocate.bind(this)} className={classes.buttonMargin} variant="contained" color="primary">
+                      Allocate
                     </Button>
-                    </Box>
+                  </Box>
                 </Grid>
               </Grid>
+
+              {/* Contact rates data sheet */}
               <ReactDataSheet
                 data={this.state.grid}
                 valueRenderer={cell => cell.value}
@@ -172,7 +227,7 @@ class MainForm extends React.Component {
                     <thead>
                       <tr>
                         <th className='action-cell' />
-                        {this.state.groups.map((group) => (<th>{group.name}</th>))}
+                        {this.state.groups.map((group) => (<th key={group.name}>{group.name}</th>))}
                       </tr>
                     </thead>
                     <tbody>
