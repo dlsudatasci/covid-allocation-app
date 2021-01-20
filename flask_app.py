@@ -1,9 +1,11 @@
 from flask import Flask, request
+from flask_cors import CORS
 from multiprocessing import Process, Lock, Queue
 import Model as model
 import json
 
 app = Flask(__name__)
+CORS(app)
 
 Q = Queue()
 
@@ -13,6 +15,10 @@ def runModel(Group,N0,fn0,Kmatval,H):
     Q.put(results)
 
 @app.route('/', methods=['GET'])
+def hello():
+    return 'Hello world!'
+
+@app.route('/solve', methods=['GET'])
 # http://localhost:5000/?groups=[%22A%22,%22B%22]&N0=[100,200]&fn0=[0.5,0.5]&Kmatval=[0.8,0.9,0.8,0.9]&H=0.98
 def vacmodel():
     Group = request.args.get('groups')
