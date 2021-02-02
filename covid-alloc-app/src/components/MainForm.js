@@ -39,7 +39,8 @@ class MainForm extends React.Component {
       grid: [
         // [{value: 0}]
       ],
-      ve: 0.0,
+      ve: 0.50,
+      results: null,
     };
 
     this.addGroup = this.addGroup.bind(this);
@@ -99,60 +100,106 @@ class MainForm extends React.Component {
         Array.apply(null, Array(prevState.groups.length + 1)).map(function () { return { value: 0 } })
       ]
     }))
+
+    console.log(this.state.grid)
   }
 
   // for removing population groups
-  removeGroup(event) {
-
+  removeGroup = name => () => {
+    console.log(name)
+    let groupName = name;
+    let grpsClone = JSON.parse(JSON.stringify(this.state)).groups
+    let index = -1
+    grpsClone.find(function (item, i) {
+      if (item.name === groupName) {
+        index = i
+        return i
+      }
+    });
+    grpsClone.splice(index, 1);
+    this.setState(prevState => ({
+      groups: grpsClone,
+      grid: [
+        ...this.removeFromPrev(prevState.grid, prevState.groups.length - 1),
+      ]
+    }))
   }
+
+  // helper function for contact grid
+  removeFromPrev(prevGrid, newVal) {
+    while (prevGrid.length !== newVal) {
+      prevGrid.pop()
+    }
+
+    prevGrid.forEach(row => {
+      while (row.length !== newVal) {
+        row.pop()
+      }
+    })
+    return prevGrid
+  }
+
 
   // for allocate button
   allocate() {
     console.log(this.state)
 
     // build API URL
-    let apiURL = "https://34.123.195.162:5000/solve?groups=["
+    let apiURL = "http://34.123.195.162:5000/solve?groups=["
 
     this.state.groups.forEach((group, index) => {
-      apiURL += "'" + group.name + "'"
+      apiURL += "%22" + group.name + "%22"
       if (index !== this.state.groups.length - 1) {
-        apiURL += ","
+        // apiURL += ","
+        apiURL += "%2C"
       }
     });
 
     apiURL += "]&N0=[";
 
-    this.state.groups.forEach((group,index) => {
+    this.state.groups.forEach((group, index) => {
       apiURL += group.population
       if (index !== this.state.groups.length - 1) {
-        apiURL += ","
+        // apiURL += ","
+        apiURL += "%2C"
       }
     });
 
-    apiURL += "]&fn0=[0.5,0.5]&Kmatval=[";
-    this.state.grid.forEach((row,ri) => {
-      console.log(row)
-      row.forEach((cell,ci)=>{
+    apiURL += "]&fn0=[0.5%2C0.5]&Kmatval=[";
+    this.state.grid.forEach((row, ri) => {
+      // console.log(row)
+      row.forEach((cell, ci) => {
         apiURL += cell.value
-        if (ri!==this.state.grid.length-1 || ci!==row.length-1){
-          apiURL += ","
+        if (ri !== this.state.grid.length - 1 || ci !== row.length - 1) {
+          // apiURL += ","
+          apiURL += "%2C"
         }
       })
     });
 
-    apiURL += "]&H="+this.state.ve;
-    let sample = "https://34.123.195.162:5000/solve?groups=[%22A%22%2C%22B%22]&N0=[200%2C200]&fn0=[0.5%2C0.5]&Kmatval=[1.0%2C0.9%2C0.8%2C0.9]&H=0.98"
-
-    // fetch result from API and print
+    apiURL += "]&H=" + this.state.ve;
+    let sample = "http://34.123.195.162:5000/solve?groups=[%22A%22%2C%22B%22]&N0=[200%2C200]&fn0=[0.5%2C0.5]&Kmatval=[1.0%2C0.9%2C0.8%2C0.9]&H=0.98"
+    console.log(sample)
     console.log(apiURL)
     axios
       .get(apiURL)
       .then((response) => {
-        console.log(response)
+        // console.log(response)
+        // this.setState({
+        //   results: response.data
+        // })
+        alert(response.data.result[1])
+        console.log(response.data.result)
       })
       .catch((error) => {
         console.log(error);
       });
+  }
+
+  handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      this.addGroup()
+    }
   }
 
   render() {
@@ -173,6 +220,7 @@ class MainForm extends React.Component {
                 value={this.state.groupName}
                 onChange={this.handleChange.bind(this)}
                 variant="outlined"
+                onKeyPress={this.handleKeyPress}
                 InputProps={{ endAdornment: <Button onClick={this.addGroup}>Add</Button> }}
               />
               {/* </form> */}
@@ -187,19 +235,42 @@ class MainForm extends React.Component {
                     onChange={this.handlePopulationChange.bind(this)}
                     InputProps={{
                       startAdornment: <InputAdornment position="start">{group.name}:</InputAdornment>,
-                      endAdornment: <Icon onClick={this.removeGroup} className={classes.closeBtn}>close</Icon>
+                      endAdornment: <Icon onClick={this.removeGroup(group.name)} className={classes.closeBtn}>close</Icon>
                     }}
                     name={group.name}
                   />
                 </Box>
               )}
 
+<h2>Vaccine Efficacy</h2>
               {/* Vaccine efficacy input */}
               <Box mt={2}>
                 <TextField fullWidth required id="standard-required" label="Vaccine Efficiency" value={this.state.ve}
                   onChange={this.handleChange.bind(this)} name='ve'
                 />
               </Box>
+
+              {
+                this.state.results && this.state.results.status === true ?
+                  <div>
+                    <h2>Results</h2>
+                    {this.state.results.result.map((result) =>
+                      <p>{result}</p>
+                    )}
+
+                  </div>
+                  :
+                  this.state.results ?
+                    <div>
+                      <h2>Error!</h2>
+                      <p>{this.state.results.errors}</p>
+                    </div>
+                    :
+                    <div></div>
+
+              }
+
+
             </Grid>
 
             {/* Right Column */}
