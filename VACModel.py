@@ -32,7 +32,7 @@ class VACModel():
         self.H = [0.98, 0.90] #vaccine efficacy values
         self.vac_avail = [200, 100] #available number of vaccines, integer values
         self.Hvac = dict(zip(self.vac_type, self.H)) #dictionary used for the model
-        self.model_sub_type = "minR" #see below
+        self.model_sub_type = "minV" #see below
         
         """
         subtype of model
@@ -41,7 +41,7 @@ class VACModel():
          
         For the interface, just make the model subtype options as two radio buttons
         For incomplete data, we just display an error regarding the number of data specified. For example, if the user specify 5 groups, he should provide, 5 population values and 25 contact rate values
-        
+        The model can run if minV is used.
         """
 
     def run(self):
@@ -138,6 +138,7 @@ class VACModel():
         - Number of People to be vaccinated in each population group (items in sublist) per vaccine type (sublist in the list)
         
         I am thinking of doing sensitivity analysis by varying the total vaccines and getting the R value. 
+        
         """
 
 
