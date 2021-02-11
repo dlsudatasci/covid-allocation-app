@@ -5,10 +5,15 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/styles';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
+import Radio from '@material-ui/core/Radio';
 import Container from '@material-ui/core/Container';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import RadioGroup from '@material-ui/core/RadioGroup';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Icon from '@material-ui/core/Icon';
 import ReactDataSheet from 'react-datasheet';
+import FormControl from '@material-ui/core/FormControl';
+import FormLabel from '@material-ui/core/FormLabel';
 
 import axios from "axios"
 import React from 'react';
@@ -41,9 +46,13 @@ class MainForm extends React.Component {
       ],
       ve: 0.50,
       results: null,
+      model: 'minV',
+      vaccineName: "",
+      vaccines: [],
     };
 
     this.addGroup = this.addGroup.bind(this);
+    this.addVaccine = this.addVaccine.bind(this);
   }
 
   // handling change for text box values (Group, vaccine efficacy)
@@ -66,6 +75,7 @@ class MainForm extends React.Component {
         index = i
         return i
       }
+      return 0
     });
 
     grpsClone[index].population = fieldVal
@@ -115,6 +125,7 @@ class MainForm extends React.Component {
         index = i
         return i
       }
+      return 0
     });
     grpsClone.splice(index, 1);
     this.setState(prevState => ({
@@ -143,6 +154,10 @@ class MainForm extends React.Component {
   // for allocate button
   allocate() {
     console.log(this.state)
+    if (this.state.model === 'minR') {
+      alert("No model set up for minR yet")
+      return
+    }
 
     // build API URL
     let apiURL = "http://34.123.195.162:5000/solve?groups=["
@@ -197,15 +212,77 @@ class MainForm extends React.Component {
   }
 
   handleKeyPress = (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && event.target.name==='groupName') {
       this.addGroup()
     }
+    if (event.key === 'Enter' && this.state.model === 'minR') {
+      this.addVaccine()
+    }
+  }
+
+  handleModelChange = (event) => {
+    this.setState({
+      model: event.target.value
+    })
+  }
+
+  // adding new vaccine, updating state for vaccines array
+  addVaccine() {
+    let name = this.state.vaccineName
+    if (name === "") return
+    this.setState(prevState => ({
+      vaccineName: "",
+      vaccines: [...prevState.vaccines, {
+        name,
+        effectivity: 0.50
+      }],
+    }))
+  }
+
+  // for removing population groups
+  removeVaccine = name => () => {
+    let vName = name;
+    let vacsClone = JSON.parse(JSON.stringify(this.state)).vaccines
+    let index = -1
+    vacsClone.find(function (item, i) {
+      if (item.name === vName) {
+        index = i
+        return i
+      }
+      return 0
+    });
+    vacsClone.splice(index, 1);
+    this.setState(prevState => ({
+      vaccines: vacsClone,
+    }))
   }
 
   render() {
     const { classes } = this.props;
     return (
       <div className='wrapper'>
+        <Container>
+          <h1>COVID Vaccine Allocation Model</h1>
+          <FormControl component="fieldset">
+            {/* <FormLabel component="legend">Model</FormLabel> */}
+            <RadioGroup row>
+              <FormControlLabel
+                control={<Radio color="primary" />}
+                checked={this.state.model === 'minV'}
+                onChange={this.handleModelChange}
+                value="minV"
+                label="minV"
+              />
+              <FormControlLabel
+                control={<Radio color="primary" />}
+                checked={this.state.model === 'minR'}
+                onChange={this.handleModelChange}
+                value="minR"
+                label="minR"
+              />
+            </RadioGroup>
+          </FormControl>
+        </Container>
         <Container>
           <Grid container spacing={1}>
             {/* Left Column */}
@@ -242,13 +319,53 @@ class MainForm extends React.Component {
                 </Box>
               )}
 
-<h2>Vaccine Efficacy</h2>
-              {/* Vaccine efficacy input */}
-              <Box mt={2}>
-                <TextField fullWidth required id="standard-required" label="Vaccine Efficiency" value={this.state.ve}
-                  onChange={this.handleChange.bind(this)} name='ve'
-                />
-              </Box>
+              {this.state.model === 'minV' &&
+                <div>
+                  <h2>Vaccine Efficacy</h2>
+                  {/* Vaccine efficacy input */}
+                  <Box mt={2}>
+                    <TextField fullWidth required id="standard-required" label="Vaccine Efficiency" value={this.state.ve}
+                      onChange={this.handleChange.bind(this)} name='ve'
+                    />
+                  </Box>
+                </div>
+              }
+
+              {this.state.model === 'minR' &&
+                <div>
+                  <h2>Vaccine Types</h2>
+                  {/* <form noValidate autoComplete="off"> */}
+                  <TextField
+                    fullWidth
+                    label="Vaccine Name"
+                    name='vaccineName'
+                    value={this.state.vaccineName}
+                    onChange={this.handleChange.bind(this)}
+                    variant="outlined"
+                    onKeyPress={this.handleKeyPress}
+                    InputProps={{ endAdornment: <Button onClick={this.addVaccine}>Add</Button> }}
+                  />
+                  {/* </form> */}
+
+                  {/* Population size input for every group */}
+                  {this.state.vaccines.map((vaccine) =>
+                    <Box mt={2} key={vaccine.name}>
+                      <TextField
+                        fullWidth
+                        // label={group.name}
+                        value={vaccine.effectivity}
+                        onChange={this.handlePopulationChange.bind(this)}
+                        InputProps={{
+                          startAdornment: <InputAdornment position="start">{vaccine.name}:</InputAdornment>,
+                          endAdornment: <Icon onClick={this.removeVaccine(vaccine.name)} className={classes.closeBtn}>close</Icon>
+                        }}
+                        name={vaccine.name}
+                      />
+                    </Box>
+                  )}
+                </div>
+              }
+
 
               {
                 this.state.results && this.state.results.status === true ?
