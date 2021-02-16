@@ -2,9 +2,6 @@
 import './App.css';
 import 'react-datasheet/lib/react-datasheet.css';
 
-// import {Navbar} from 'react-bootstrap';
-
-
 import React from 'react';
 import MainForm from './components/MainForm.js';
 
@@ -56,6 +53,8 @@ function App() {
           {/* <Button color="inherit">Login</Button> */}
         </Toolbar>
       </AppBar>
+
+      {/* Main Form Component */}
       <MainForm />
     </div>
   );

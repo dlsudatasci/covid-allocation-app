@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QFileDialog
 
 class MyTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data=[[]], parent=None):
@@ -1388,3 +1389,25 @@ class Ui_MainWindow(object):
         self.actionAbout.setText(_translate("MainWindow", "About"))
         self.actionDocumentation.setText(_translate("MainWindow", "Documentation"))
         self.actionSave_As.setText(_translate("MainWindow", "Save As ..."))
+
+        self.MainWindow = MainWindow
+
+    def saveAs(self):
+        _translate = QtCore.QCoreApplication.translate
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getSaveFileName(None,"Save As","","JSON file (*.json)", options=options)
+        if fileName:
+            print(fileName)
+            self.MainWindow.setWindowTitle(_translate("MainWindow", "Vaccine Allocation Model: "+fileName))
+            return fileName
+
+    def open(self):
+        _translate = QtCore.QCoreApplication.translate
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        fileName, _ = QFileDialog.getOpenFileName(None,"Open File","","JSON file (*.json)", options=options)
+        if fileName:
+            print(fileName)
+            self.MainWindow.setWindowTitle(_translate("MainWindow", "Vaccine Allocation Model: "+fileName))
+            return fileName

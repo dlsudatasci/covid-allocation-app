@@ -1,0 +1,36 @@
+{
+	"vaccine_efficacy":0.5,
+	"population_groups":[
+		{
+			"name":"Group 1",
+			"size":100
+		},
+		{
+			"name":"Group 2",
+			"size":100
+		},
+	],
+	"contact_rates":[
+		{
+			"col":"Group 1",
+			"row":"Group 1",
+			"val":0.2
+		},
+		{
+			"col":"Group 1",
+			"row":"Group 2",
+			"val":0.2
+		},
+		{
+			"col":"Group 2",
+			"row":"Group 2",
+			"val":0.2
+		},
+		{
+			"col":"Group 2",
+			"row":"Group 1",
+			"val":0.2
+		},
+	]
+
+}
