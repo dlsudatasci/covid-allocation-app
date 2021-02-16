@@ -1,0 +1,1 @@
+{"vaccine_efficacy": 0.1, "population_groups": [{"name": "G1", "size": 100}, {"name": "G2", "size": 200}], "contact_rates": [{"col": "G1", "row": "G1", "val": 0.1}, {"col": "G2", "row": "G1", "val": 0.2}, {"col": "G1", "row": "G2", "val": 0.3}, {"col": "G2", "row": "G2", "val": 0.4}]}
