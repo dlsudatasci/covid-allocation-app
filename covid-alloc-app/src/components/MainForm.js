@@ -271,14 +271,14 @@ class MainForm extends React.Component {
                 checked={this.state.model === 'minV'}
                 onChange={this.handleModelChange}
                 value="minV"
-                label="minV"
+                label="Minimize Vaccines Required"
               />
               <FormControlLabel
                 control={<Radio color="primary" />}
                 checked={this.state.model === 'minR'}
                 onChange={this.handleModelChange}
                 value="minR"
-                label="minR"
+                label="Minimize Reproductive Rate"
               />
             </RadioGroup>
           </FormControl>
