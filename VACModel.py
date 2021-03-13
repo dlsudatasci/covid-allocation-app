@@ -20,8 +20,9 @@ class VACModel():
         #initial data
         self.Group = ["A", "B", "C", "D", "E"] #groups
         self.N0= {"A":77, "B":241, "C":375, "D":204, "E":103} #population per group
-        #self.fn0= {"A":0.5, "B":0.5, "C":0.5, "D":0.5, "E":0.5} #default values for allocation variables
-        self.vac_type = ["Vac A", "Vac B"] #vaccine types
+        # self.fn0= {"A":0.5, "B":0.5, "C":0.5, "D":0.5, "E":0.5} #default values for allocation variables
+        # self.vac_type = ["Vac A", "Vac B"] #vaccine types
+        self.vac_type =["Vac A"] 
         self.Kmatval = [
             0.6, 0.1, 0.1, 0.1, 0.1,
             0.2, 1.7, 0.3, 0.2, 0.2,
@@ -29,10 +30,12 @@ class VACModel():
             0.2, 0.1, 0.3, 0.2, 0.1,
             0.1, 0.1, 0.1, 0.1, 0.1
             ] #contact rates between groups
-        self.H = [0.98, 0.90] #vaccine efficacy values
-        self.vac_avail = [200, 100] #available number of vaccines, integer values
+        # self.H = [0.98, 0.90] #vaccine efficacy values
+        self.H =[0.98] 
+        # self.vac_avail = [30, 100] #available number of vaccines, integer values
+        self.vac_avail = [187]
         self.Hvac = dict(zip(self.vac_type, self.H)) #dictionary used for the model
-        self.model_sub_type = "minV" #see below
+        self.model_sub_type = "minR" #see below
         
         """
         subtype of model
@@ -42,6 +45,8 @@ class VACModel():
         For the interface, just make the model subtype options as two radio buttons
         For incomplete data, we just display an error regarding the number of data specified. For example, if the user specify 5 groups, he should provide, 5 population values and 25 contact rate values
         The model can run if minV is used.
+        
+        I put a sample for one vaccine 
         """
 
     def run(self):
